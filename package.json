@@ -1,0 +1,20 @@
+{
+  "name": "motus",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c green,cyan \"npm run dev -w @motus/backend\" \"npm run dev -w @motus/frontend\"",
+    "build": "npm run build --workspaces",
+    "prisma:generate": "npm run prisma:generate -w @motus/backend",
+    "prisma:migrate": "npm run prisma:migrate -w @motus/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
+  }
+}
