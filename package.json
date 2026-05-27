@@ -8,8 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c green,cyan \"npm run dev -w @motus/backend\" \"npm run dev -w @motus/frontend\"",
-    "build": "npm run build --workspaces",
+    "dev": "npm run build -w @motus/shared && concurrently -n backend,frontend -c green,cyan \"npm run dev -w @motus/backend\" \"npm run dev -w @motus/frontend\"",
+    "build": "npm run build -w @motus/shared && npm run build -w @motus/backend && npm run build -w @motus/frontend",
     "prisma:generate": "npm run prisma:generate -w @motus/backend",
     "prisma:migrate": "npm run prisma:migrate -w @motus/backend"
   },
