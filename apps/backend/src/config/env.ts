@@ -1,4 +1,8 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "node:path";
+
+dotenv.config({ path: path.resolve(process.cwd(), "../../.env"), quiet: true });
+dotenv.config({ path: path.resolve(process.cwd(), ".env"), override: true, quiet: true });
 
 type VisionProviderName = "mock" | "huggingface";
 

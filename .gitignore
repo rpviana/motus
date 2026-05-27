@@ -8,4 +8,3 @@ coverage/
 *.log
 *.tsbuildinfo
 apps/frontend/.vite/
-apps/backend/prisma/migrations/
