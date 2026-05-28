@@ -11,11 +11,38 @@ const labelMap: Array<{ type: MobilityType; keywords: string[] }> = [
   }
 ];
 
+const humanKeywords = [
+  "person",
+  "people",
+  "human",
+  "adult",
+  "child",
+  "man",
+  "woman",
+  "boy",
+  "girl",
+  "head",
+  "face",
+  "body"
+];
+
 export function classifyMobilityLabel(label: string): MobilityType | null {
-  const normalized = label.toLowerCase();
-  const match = labelMap.find(({ keywords }) =>
-    keywords.some((keyword) => normalized.includes(keyword))
-  );
+  const normalized = normalizeLabel(label);
+
+  if (!normalized || humanKeywords.includes(normalized)) {
+    return null;
+  }
+
+  const match = labelMap.find(({ keywords }) => keywords.some((keyword) => normalized === keyword));
 
   return match?.type ?? null;
+}
+
+function normalizeLabel(label: string) {
+  return label
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }

@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name init"
+    "prisma:migrate": "prisma migrate dev --name init",
+    "test": "vitest"
   },
   "dependencies": {
     "@motus/shared": "*",
@@ -24,6 +25,7 @@
     "@types/node": "^24.10.1",
     "prisma": "^6.19.0",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+      "typescript": "^5.9.3"
   }
+ 
 }

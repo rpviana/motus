@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
 import { createEventLog, listEventLogs } from "./services/eventLogger.js";
+import { clearElevatorCallSchedule, scheduleElevatorCall } from "./services/elevatorCallScheduler.js";
 import { RoiTracker, roiZones } from "./services/roiTracker.js";
 import { createVisionProvider } from "./services/vision/index.js";
 
@@ -85,6 +86,23 @@ async function processFrame(payload: CameraFramePayload) {
 
   for (const command of decision.commands) {
     emitHardwareCommand(command);
+
+    if (command.command === "OPEN_DOOR") {
+      scheduleElevatorCall(() => {
+        const elevatorCommand: HardwareCommandPayload = {
+          command: "CALL_ELEVATOR",
+          reason: `${command.reason} after 6 seconds`,
+          createdAt: new Date().toISOString()
+        };
+
+        void createEventLog({
+          event: "Comando emitido",
+          command: elevatorCommand.command
+        }).then((log) => io.emit("log:created", log));
+
+        emitHardwareCommand(elevatorCommand);
+      });
+    }
   }
 
   return decision.result;
@@ -105,6 +123,7 @@ function validateFrame(payload: CameraFramePayload) {
 }
 
 function shutdown() {
+  clearElevatorCallSchedule();
   void prisma.$disconnect().finally(() => process.exit(0));
 }
 

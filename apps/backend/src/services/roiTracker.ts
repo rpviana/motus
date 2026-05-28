@@ -16,8 +16,6 @@ type NormalizedZone = {
 };
 
 type MobilityState = {
-  entrySeenAt?: number;
-  detectionLoggedAt?: number;
   commandSentAt?: number;
 };
 
@@ -32,9 +30,9 @@ export const roiZones: NormalizedZone[] = [
   { id: "ELEVATOR_PATH", xMin: 0.43, xMax: 0.96, yMin: 0.18, yMax: 0.98 }
 ];
 
-const detectionCooldownMs = 5000;
 const commandCooldownMs = 15000;
-const intentWindowMs = 14000;
+const minimumConfidence = 0.75;
+const autoOpenTypes = new Set<MobilityType>(["wheelchair", "crutches"]);
 
 export class RoiTracker {
   private readonly state = new Map<MobilityType, MobilityState>();
@@ -49,59 +47,43 @@ export class RoiTracker {
     }));
 
     for (const detection of detections) {
-      if (!detection.zone) {
+      if (!detection.mobilityType) {
+        continue;
+      }
+
+      if (!autoOpenTypes.has(detection.mobilityType) || detection.confidence < minimumConfidence) {
         continue;
       }
 
       const state = this.stateFor(detection.mobilityType);
+      const zone = detection.zone ?? "ENTRY";
 
-      if (detection.zone === "ENTRY") {
-        state.entrySeenAt = now;
-
-        if (!state.detectionLoggedAt || now - state.detectionLoggedAt > detectionCooldownMs) {
-          state.detectionLoggedAt = now;
-          logs.push({
-            event: "Detecao",
-            mobilityType: detection.mobilityType,
-            zone: detection.zone,
-            confidence: detection.confidence,
-            metadata: {
-              label: detection.label,
-              box: detection.box
-            }
-          });
-        }
-      }
-
-      if (detection.zone === "ELEVATOR_PATH" && this.hasRecentEntry(state, now)) {
-        if (!state.commandSentAt || now - state.commandSentAt > commandCooldownMs) {
-          state.commandSentAt = now;
-          logs.push({
-            event: "Intencao confirmada",
-            mobilityType: detection.mobilityType,
-            zone: detection.zone,
-            confidence: detection.confidence,
-            metadata: {
-              label: detection.label,
-              box: detection.box
-            }
-          });
-
-          for (const command of ["OPEN_DOOR", "CALL_ELEVATOR"] as const) {
-            commands.push({
-              command,
-              reason: `${detection.mobilityType} moved from ENTRY to ELEVATOR_PATH`,
-              createdAt: new Date(now).toISOString()
-            });
-            logs.push({
-              event: "Comando emitido",
-              mobilityType: detection.mobilityType,
-              zone: detection.zone,
-              command,
-              confidence: detection.confidence
-            });
+      if (!state.commandSentAt || now - state.commandSentAt > commandCooldownMs) {
+        state.commandSentAt = now;
+        logs.push({
+          event: "Detecao",
+          mobilityType: detection.mobilityType,
+          zone,
+          confidence: detection.confidence,
+          metadata: {
+            label: detection.label,
+            box: detection.box
           }
-        }
+        });
+
+        commands.push({
+          command: "OPEN_DOOR",
+          reason: `${detection.mobilityType} detected in ${zone}`,
+          createdAt: new Date(now).toISOString()
+        });
+
+        logs.push({
+          event: "Comando emitido",
+          mobilityType: detection.mobilityType,
+          zone,
+          command: "OPEN_DOOR",
+          confidence: detection.confidence
+        });
       }
     }
 
@@ -113,10 +95,6 @@ export class RoiTracker {
       logs,
       commands
     };
-  }
-
-  private hasRecentEntry(state: MobilityState, now: number) {
-    return Boolean(state.entrySeenAt && now - state.entrySeenAt <= intentWindowMs);
   }
 
   private stateFor(type: MobilityType) {
