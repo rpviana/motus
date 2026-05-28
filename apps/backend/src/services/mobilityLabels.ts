@@ -1,7 +1,7 @@
 import type { MobilityType } from "@motus/shared";
 
 const labelMap: Array<{ type: MobilityType; keywords: string[] }> = [
-  { type: "wheelchair", keywords: ["wheelchair", "wheel chair", "cadeira de rodas"] },
+  { type: "wheelchair", keywords: ["wheelchair", "weelchair", "wheel chair", "cadeira de rodas"] },
   { type: "crutches", keywords: ["crutch", "crutches", "muleta"] },
   { type: "walker", keywords: ["walker", "walking frame", "andador"] },
   { type: "cane", keywords: ["cane", "walking stick", "bengala"] },

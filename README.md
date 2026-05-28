@@ -46,7 +46,15 @@ Por defeito o projeto usa:
 VISION_PROVIDER="mock"
 ```
 
-Isto permite testar o fluxo completo sem API externa. Para usar um provider online:
+Isto permite testar o fluxo completo sem API externa. Para usar o modelo Roboflow treinado:
+
+```env
+VISION_PROVIDER="roboflow"
+ROBOFLOW_API_KEY="..."
+ROBOFLOW_MODEL_URL="https://serverless.roboflow.com/motus-accessibility/2"
+```
+
+Para usar o provider Hugging Face generico:
 
 ```env
 VISION_PROVIDER="huggingface"
@@ -54,7 +62,7 @@ HUGGING_FACE_API_TOKEN="..."
 HUGGING_FACE_MODEL="facebook/detr-resnet-50"
 ```
 
-Para producao, troca `HUGGING_FACE_MODEL` por um modelo de object detection treinado para devolver labels como `wheelchair`, `crutches`, `walker`, `cane` ou `mobility scooter`.
+Para producao, usa um modelo de object detection treinado para devolver labels como `wheelchair`, `crutches`, `walker`, `cane` ou `mobility scooter`.
 
 ## Fluxo
 
