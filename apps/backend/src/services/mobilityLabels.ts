@@ -1,41 +1,27 @@
 import type { MobilityType } from "@motus/shared";
 
-const labelMap: Array<{ type: MobilityType; keywords: string[] }> = [
-  { type: "wheelchair", keywords: ["wheelchair", "weelchair", "wheel chair", "cadeira de rodas"] },
-  { type: "crutches", keywords: ["crutch", "crutches", "muleta"] },
-  { type: "walker", keywords: ["walker", "walking frame", "andador"] },
-  { type: "cane", keywords: ["cane", "walking stick", "bengala"] },
-  {
-    type: "mobility_scooter",
-    keywords: ["mobility scooter", "electric scooter", "scooter"]
-  }
-];
-
-const humanKeywords = [
-  "person",
-  "people",
-  "human",
-  "adult",
-  "child",
-  "man",
-  "woman",
-  "boy",
-  "girl",
-  "head",
-  "face",
-  "body"
-];
+// Labels aceites vindas do Roboflow. "person" fica fora de proposito.
+const mobilityLabels: Record<string, MobilityType> = {
+  wheelchair: "wheelchair",
+  weelchair: "wheelchair",
+  "wheel chair": "wheelchair",
+  "cadeira de rodas": "wheelchair",
+  crutch: "crutches",
+  crutches: "crutches",
+  muleta: "crutches",
+  walker: "walker",
+  "walking frame": "walker",
+  andador: "walker",
+  cane: "cane",
+  "walking stick": "cane",
+  bengala: "cane",
+  scooter: "mobility_scooter",
+  "mobility scooter": "mobility_scooter",
+  "electric scooter": "mobility_scooter"
+};
 
 export function classifyMobilityLabel(label: string): MobilityType | null {
-  const normalized = normalizeLabel(label);
-
-  if (!normalized || humanKeywords.includes(normalized)) {
-    return null;
-  }
-
-  const match = labelMap.find(({ keywords }) => keywords.some((keyword) => normalized === keyword));
-
-  return match?.type ?? null;
+  return mobilityLabels[normalizeLabel(label)] ?? null;
 }
 
 function normalizeLabel(label: string) {

@@ -15,10 +15,6 @@ type NormalizedZone = {
   yMax: number;
 };
 
-type MobilityState = {
-  commandSentAt?: number;
-};
-
 export type RoiDecision = {
   result: VisionResult;
   logs: EventLogDraft[];
@@ -35,7 +31,7 @@ const minimumConfidence = 0.75;
 const autoOpenTypes = new Set<MobilityType>(["wheelchair", "crutches"]);
 
 export class RoiTracker {
-  private readonly state = new Map<MobilityType, MobilityState>();
+  private readonly lastCommandAt = new Map<MobilityType, number>();
 
   evaluate(result: VisionResult): RoiDecision {
     const now = Date.now();
@@ -47,44 +43,37 @@ export class RoiTracker {
     }));
 
     for (const detection of detections) {
-      if (!detection.mobilityType) {
+      if (!isActionable(detection) || this.isCoolingDown(detection.mobilityType, now)) {
         continue;
       }
 
-      if (!autoOpenTypes.has(detection.mobilityType) || detection.confidence < minimumConfidence) {
-        continue;
-      }
-
-      const state = this.stateFor(detection.mobilityType);
       const zone = detection.zone ?? "ENTRY";
+      this.lastCommandAt.set(detection.mobilityType, now);
 
-      if (!state.commandSentAt || now - state.commandSentAt > commandCooldownMs) {
-        state.commandSentAt = now;
-        logs.push({
-          event: "Detecao",
-          mobilityType: detection.mobilityType,
-          zone,
-          confidence: detection.confidence,
-          metadata: {
-            label: detection.label,
-            box: detection.box
-          }
-        });
+      logs.push({
+        event: "Detecao",
+        mobilityType: detection.mobilityType,
+        zone,
+        confidence: detection.confidence,
+        metadata: {
+          label: detection.label,
+          box: detection.box
+        }
+      });
 
-        commands.push({
-          command: "OPEN_DOOR",
-          reason: `${detection.mobilityType} detected in ${zone}`,
-          createdAt: new Date(now).toISOString()
-        });
+      commands.push({
+        command: "OPEN_DOOR",
+        reason: `${detection.mobilityType} detected in ${zone}`,
+        createdAt: new Date(now).toISOString()
+      });
 
-        logs.push({
-          event: "Comando emitido",
-          mobilityType: detection.mobilityType,
-          zone,
-          command: "OPEN_DOOR",
-          confidence: detection.confidence
-        });
-      }
+      logs.push({
+        event: "Comando emitido",
+        mobilityType: detection.mobilityType,
+        zone,
+        command: "OPEN_DOOR",
+        confidence: detection.confidence
+      });
     }
 
     return {
@@ -97,17 +86,15 @@ export class RoiTracker {
     };
   }
 
-  private stateFor(type: MobilityType) {
-    const existing = this.state.get(type);
-
-    if (existing) {
-      return existing;
-    }
-
-    const created: MobilityState = {};
-    this.state.set(type, created);
-    return created;
+  private isCoolingDown(type: MobilityType, now: number) {
+    const lastCommandAt = this.lastCommandAt.get(type);
+    return Boolean(lastCommandAt && now - lastCommandAt <= commandCooldownMs);
   }
+}
+
+// So cadeira de rodas e muletas com confianca suficiente acionam o hardware.
+function isActionable(detection: MobilityDetection) {
+  return autoOpenTypes.has(detection.mobilityType) && detection.confidence >= minimumConfidence;
 }
 
 function detectZone(

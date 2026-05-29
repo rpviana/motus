@@ -5,7 +5,6 @@ import type {
   MobilityType,
   RoiZone
 } from "@motus/shared";
-import { randomUUID } from "node:crypto";
 import { prisma } from "../db/prisma.js";
 
 export type EventLogDraft = {
@@ -29,48 +28,27 @@ function toLog(event: PrismaMobilityEvent): MobilityEventLog {
   };
 }
 
-function fallbackLog(draft: EventLogDraft): MobilityEventLog {
-  return {
-    id: `memory-${randomUUID()}`,
-    event: draft.event,
-    mobilityType: draft.mobilityType ?? null,
-    zone: draft.zone ?? null,
-    command: draft.command ?? null,
-    confidence: draft.confidence ?? null,
-    createdAt: new Date().toISOString()
-  };
-}
-
+// Guarda o historico real no Neon e devolve o formato usado pelo frontend.
 export async function createEventLog(draft: EventLogDraft): Promise<MobilityEventLog> {
-  try {
-    const event = await prisma.mobilityEvent.create({
-      data: {
-        event: draft.event,
-        mobilityType: draft.mobilityType,
-        zone: draft.zone,
-        command: draft.command,
-        confidence: draft.confidence,
-        metadata: draft.metadata
-      }
-    });
+  const event = await prisma.mobilityEvent.create({
+    data: {
+      event: draft.event,
+      mobilityType: draft.mobilityType,
+      zone: draft.zone,
+      command: draft.command,
+      confidence: draft.confidence,
+      metadata: draft.metadata
+    }
+  });
 
-    return toLog(event);
-  } catch (error) {
-    console.warn("Prisma log write failed, keeping realtime fallback log", error);
-    return fallbackLog(draft);
-  }
+  return toLog(event);
 }
 
 export async function listEventLogs(limit = 50): Promise<MobilityEventLog[]> {
-  try {
-    const events = await prisma.mobilityEvent.findMany({
-      orderBy: { createdAt: "desc" },
-      take: Math.min(Math.max(limit, 1), 100)
-    });
+  const events = await prisma.mobilityEvent.findMany({
+    orderBy: { createdAt: "desc" },
+    take: Math.min(Math.max(limit, 1), 100)
+  });
 
-    return events.map(toLog);
-  } catch (error) {
-    console.warn("Prisma log read failed", error);
-    return [];
-  }
+  return events.map(toLog);
 }

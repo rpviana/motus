@@ -74,6 +74,7 @@ io.on("connection", (socket) => {
 async function processFrame(payload: CameraFramePayload) {
   validateFrame(payload);
 
+  // Fluxo principal: Roboflow -> ROI -> logs -> comandos para o simulador.
   const rawResult = await visionProvider.detect(payload);
   const decision = roiTracker.evaluate(rawResult);
 
@@ -88,6 +89,7 @@ async function processFrame(payload: CameraFramePayload) {
     emitHardwareCommand(command);
 
     if (command.command === "OPEN_DOOR") {
+      // Depois da porta abrir, o elevador e chamado com atraso para simular o percurso.
       scheduleElevatorCall(() => {
         const elevatorCommand: HardwareCommandPayload = {
           command: "CALL_ELEVATOR",

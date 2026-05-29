@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import path from "node:path";
 
+// Aceita .env na raiz do monorepo e em apps/backend; o backend ganha prioridade.
 dotenv.config({ path: path.resolve(process.cwd(), "../../.env"), quiet: true });
 dotenv.config({ path: path.resolve(process.cwd(), ".env"), override: true, quiet: true });
 

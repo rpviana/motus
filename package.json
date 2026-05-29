@@ -15,7 +15,6 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "typescript": "^5.9.3",
-    "vitest": "^1.1.5"
+    "typescript": "^5.9.3"
   }
 }

@@ -8,7 +8,6 @@ type RoboflowPrediction = {
   height?: number;
   confidence?: number;
   class?: string;
-  class_id?: number;
   detection_id?: string;
 };
 
@@ -26,6 +25,7 @@ export class RoboflowVisionProvider {
     private readonly apiKey: string
   ) {}
 
+  // Envia o frame ao Roboflow Serverless e normaliza a resposta para o Motus.
   async detect(frame: CameraFramePayload): Promise<VisionResult> {
     const response = await fetch(`${this.modelUrl}?api_key=${this.apiKey}`, {
       method: "POST",
@@ -44,18 +44,15 @@ export class RoboflowVisionProvider {
     const sourceWidth = payload.image?.width ?? frame.sourceWidth;
     const sourceHeight = payload.image?.height ?? frame.sourceHeight;
 
-    return {
-      detections: (payload.predictions ?? []).flatMap((prediction, index) =>
-        toDetection(prediction, index)
-      ),
-      sourceWidth,
-      sourceHeight,
-      processedAt: new Date().toISOString()
-    };
+    const detections = (payload.predictions ?? [])
+      .map(toDetection)
+      .filter((detection): detection is MobilityDetection => Boolean(detection));
+
+    return { detections, sourceWidth, sourceHeight, processedAt: new Date().toISOString() };
   }
 }
 
-function toDetection(prediction: RoboflowPrediction, index: number): MobilityDetection[] {
+function toDetection(prediction: RoboflowPrediction, index: number): MobilityDetection | null {
   const label = prediction.class ?? "";
   const mobilityType = classifyMobilityLabel(label);
   const centerX = Number(prediction.x ?? 0);
@@ -64,23 +61,21 @@ function toDetection(prediction: RoboflowPrediction, index: number): MobilityDet
   const height = Number(prediction.height ?? 0);
 
   if (!mobilityType || width <= 0 || height <= 0) {
-    return [];
+    return null;
   }
 
-  return [
-    {
-      id: prediction.detection_id ?? `roboflow-${Date.now()}-${index}`,
-      label,
-      mobilityType,
-      confidence: Number(prediction.confidence ?? 0),
-      box: {
-        x: centerX - width / 2,
-        y: centerY - height / 2,
-        width,
-        height
-      }
+  return {
+    id: prediction.detection_id ?? `roboflow-${Date.now()}-${index}`,
+    label,
+    mobilityType,
+    confidence: Number(prediction.confidence ?? 0),
+    box: {
+      x: centerX - width / 2,
+      y: centerY - height / 2,
+      width,
+      height
     }
-  ];
+  };
 }
 
 function imageToBase64(image: string) {
