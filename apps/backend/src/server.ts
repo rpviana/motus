@@ -8,7 +8,7 @@ import { prisma } from "./db/prisma.js";
 import { createEventLog, listEventLogs } from "./services/eventLogger.js";
 import { clearElevatorCallSchedule, scheduleElevatorCall } from "./services/elevatorCallScheduler.js";
 import { RoiTracker, roiZones } from "./services/roiTracker.js";
-import { createVisionProvider } from "./services/vision/index.js";
+import { RoboflowVisionProvider } from "./services/vision/roboflowVisionProvider.js";
 
 type FrameAck = (response: { ok: boolean; result?: VisionResult; error?: string }) => void;
 
@@ -23,14 +23,14 @@ const io = new Server(httpServer, {
   }
 });
 
-const visionProvider = createVisionProvider();
+const visionProvider = new RoboflowVisionProvider(env.roboflowModelUrl, env.roboflowApiKey);
 const roiTracker = new RoiTracker();
 
 app.get("/health", (_request, response) => {
   response.json({
     status: "ok",
     service: "motus-backend",
-    provider: env.visionProvider
+    provider: "roboflow"
   });
 });
 

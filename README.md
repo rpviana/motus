@@ -6,7 +6,7 @@ Motus e uma app full-stack para acessibilidade preditiva em edificios inteligent
 
 - Backend: Node.js, Express, TypeScript, Socket.io
 - Base de dados: Neon Postgres com Prisma
-- Visao computacional: provider Hugging Face configuravel, com provider `mock` para demos locais
+- Visao computacional: Roboflow Serverless com modelo treinado para o Motus
 - Frontend: React, TypeScript, Vite, Tailwind
 
 ## Estrutura
@@ -40,29 +40,14 @@ npm run prisma:migrate
 
 ## Visao computacional
 
-Por defeito o projeto usa:
+O backend usa o modelo Roboflow treinado:
 
 ```env
-VISION_PROVIDER="mock"
-```
-
-Isto permite testar o fluxo completo sem API externa. Para usar o modelo Roboflow treinado:
-
-```env
-VISION_PROVIDER="roboflow"
 ROBOFLOW_API_KEY="..."
 ROBOFLOW_MODEL_URL="https://serverless.roboflow.com/motus-accessibility/2"
 ```
 
-Para usar o provider Hugging Face generico:
-
-```env
-VISION_PROVIDER="huggingface"
-HUGGING_FACE_API_TOKEN="..."
-HUGGING_FACE_MODEL="facebook/detr-resnet-50"
-```
-
-Para producao, usa um modelo de object detection treinado para devolver labels como `wheelchair`, `crutches`, `walker`, `cane` ou `mobility scooter`.
+O modelo deve devolver labels como `wheelchair`, `crutches`, `walker`, `cane` ou `mobility scooter`. Deteccoes de `person` sao ignoradas na logica de atuacao.
 
 ## Fluxo
 

@@ -1,6 +1,5 @@
 import type { CameraFramePayload, MobilityDetection, VisionResult } from "@motus/shared";
 import { classifyMobilityLabel } from "../mobilityLabels.js";
-import type { VisionProvider } from "./types.js";
 
 type RoboflowPrediction = {
   x?: number;
@@ -21,7 +20,7 @@ type RoboflowResponse = {
   };
 };
 
-export class RoboflowVisionProvider implements VisionProvider {
+export class RoboflowVisionProvider {
   constructor(
     private readonly modelUrl: string,
     private readonly apiKey: string
