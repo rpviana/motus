@@ -41,7 +41,7 @@ export class RoiTracker {
     const now = Date.now();
     const logs: EventLogDraft[] = [];
     const commands: HardwareCommandPayload[] = [];
-    const detections = result.detections.map((detection) => ({
+    const detections = result.detections.map((detection: MobilityDetection) => ({
       ...detection,
       zone: detectZone(detection, result.sourceWidth, result.sourceHeight)
     }));
